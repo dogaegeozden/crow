@@ -1,0 +1,360 @@
+#!/usr/bin/python3
+
+# LIBRARIES
+from os import system, path, makedirs, listdir, popen
+from sys import argv
+from datetime import datetime
+
+# VARIABLES
+ckcPath = f'/root/.cyber_kill_chain/reconnaissance'
+ckcFolders = ["ping_docs", "nmap_docs", "nc_docs", "gb_docs"]
+pingDocsFolder = f'{ckcPath}/{ckcFolders[0]}'
+nmapDocsFolder = f'{ckcPath}/{ckcFolders[1]}'
+ncDocsFolder = f'{ckcPath}/{ckcFolders[2]}'
+gbDocsFolder = f'{ckcPath}/{ckcFolders[3]}'
+helpOptions = ["--help", "-help", "-h", "-?"]
+pingOptions = ["-ping", "--ping"]
+nmapOptions = ["-nmap", "--nmap"]
+ncOptions = ["-netc", "--netc"]
+torOptions = ["-torc", "--torc"]
+gbOptions = ["-grabB", "--grabB"]
+proxychainsConfFP = "/etc/proxychains.conf"
+notInstalledRPackages = []
+notInstalledDPackages = []
+
+# FUNCTIONS
+def rSIC():
+    """A function to check if all primary required softwares are installed/avaliable on the system"""
+
+    requiredSoftwares = ["iputils-ping", "nmap", "netcat"]
+    requiredSIS = 0
+
+    for s in requiredSoftwares:
+        softwareStatus = popen(f'apt-cache policy {s}').read()
+        if "***" not in softwareStatus and "(none)" in softwareStatus:
+            installPermission = str(input(f'Crow needs to install {s} to work properly. Do you allow crow to install {s} software? (y/n): ')).lower().strip()
+            if "y" in installPermission or "yes" in installPermission:
+                system(f'apt install {s} -y')
+
+        softwareStatus = popen(f'apt-cache policy {s}').read()
+        if "***" in softwareStatus and "(none)" not in softwareStatus:
+            requiredSIS += 1
+
+    for sw in requiredSoftwares:
+        softwareStatus = popen(f'apt-cache policy {s}').read()
+        if "***" not in softwareStatus and "(none)" in softwareStatus:
+            notInstalledRPackages.append(f'{sw}')
+
+    return requiredSIS
+
+def dNSIC():
+    """A function to check if all required softwares for tor/darknet are installed/available on the system."""
+
+    darknetSoftwares = ["tor", "proxychains", "curl"]
+    darknetSIS = 0
+
+    for s in darknetSoftwares:
+        sIS = popen(f'apt-cache policy {s}').read()
+        if "***" not in sIS and "(none)" in sIS:
+            installPermission = str(input(f'Crow needs to install {s} to work properly. Do you allow crow to install {s} software? (y/n): ')).lower().strip()
+            if "y" in installPermission or "yes" in installPermission:
+                system(f'apt install {s} -y')
+
+        sIS = popen(f'apt-cache policy {s}').read()
+        if "***" in sIS and "(none)" not in sIS:
+            darknetSIS += 1
+
+    for s in darknetSoftwares:
+        sIS = popen(f'apt-cache policy {s}').read()
+        if "***" not in darknetSoftwares and "(none)" in darknetSoftwares:
+            notInstalledDPackages.append(f'{s}')
+
+    return darknetSIS
+
+def sendPing(customOpts, torChoice, targetA):
+    """A function to send a ping to a target device/server"""
+
+    timeNow = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
+    if path.exists(pingDocsFolder):
+        response = system(f'{torChoice}ping {customOpts} {targetA} > {pingDocsFolder}/{timeNow}.xml')
+    else:
+        makedirs(pingDocsFolder)
+        response = system(f'{torChoice}ping {customOpts} {targetA} > {pingDocsFolder}/{timeNow}.xml')
+
+    if response == 0:
+        pingstatus = "Network Active"
+    else:
+        pingstatus = "Network Error"
+
+    oDM = f'{pingDocsFolder}/{timeNow}.xml' # output document location
+
+    return pingstatus, oDM
+
+def nmapScan(customOpts, torChoice, targetA):
+    """A function to scan services on target systems/servers"""
+
+    timeNow = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
+    if path.exists(nmapDocsFolder):
+        scan = system(f'{torChoice}nmap {customOpts} {targetA} > {nmapDocsFolder}/{timeNow}.xml')
+    else:
+        makedirs(nmapDocsFolder)
+        scan = system(f'{torChoice}nmap {customOpts} {targetA} > {nmapDocsFolder}/{timeNow}.xml')
+
+    oDM = f'{nmapDocsFolder}/{timeNow}.xml' # output document location
+
+    return oDM
+
+def netcatSwissArmyKnife(customOpts, torChoice, portN, targetA):
+    """A function to use netcat as a swiss army knife."""
+    timeNow = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
+    if path.exists(ncDocsFolder):
+        toolUse = system(f'{torChoice}nc {customOpts} {portN} {targetA} > {ncDocsFolder}/{timeNow}.xml')
+    else:
+        makedirs(ncDocsFolder)
+        toolUse = system(f'{torChoice}nc {customOpts} {portN} {targetA} > {ncDocsFolder}/{timeNow}.xml')
+
+    oDM = f'{ncDocsFolder}/{timeNow}.xml' # output document location
+
+    return oDM
+
+def grabBanners(customOpts, torChoice, targetA, portN):
+    """A function to grab the service's banner"""
+
+    timeNow = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
+    if path.exists(gbDocsFolder):
+        scan = system(f'{torChoice}nc {customOpts} {targetA} {portN} > {gbDocsFolder}/{timeNow}-{portN}.xml')
+    else:
+        makedirs(gbDocsFolder)
+        scan = system(f'{torChoice}nc {customOpts} {targetA} {portN} > {gbDocsFolder}/{timeNow}-{portN}.xml')
+
+    oDM = f'{gbDocsFolder}/{timeNow}-{portN}.xml' # output document location
+
+    return oDM
+
+def duplicateChecker(values):
+    """A function to identify if there is/are any duplicates"""
+
+    if len(values) != len(set(values)):
+        return True
+    else:
+        return False
+
+
+if rSIC() == 3:
+
+    if argv[1] in helpOptions:
+        print('\033[1m' + "NAME" + '\033[0m' + "\n\t" + 'crow - A command line reconnaissance tool that will collect information about the target system and document them in xml files with dates and times.\n\n' + '\033[1m' + 'USAGE' + '\033[0m'+ "\n\t" + 'crow [CROW OPTION] "[Custom Options]" "[Value/Values]" "targetA"' + "\n\n" + '\033[1m' + 'DESCRIPTION' + '\033[0m' +"\n\t" + "Collect information about the target system by sending it pings, scanning it's ports and grabbing service banners. Document the findings into xml files with the dates and times.\n\n\t" + f'{pingOptions[0]}, {pingOptions[1]} \n\t\tUse this option to ping the target device. The default options are set to -c 10' + "\n\n\t" + f'{nmapOptions[0]}, {nmapOptions[1]}\n\t\t' + "Use this option to scan the services available on the target device. Use double quotes to use the options that are available to nmap's it self. The default options are set to -sV -sC -sT -A -p-" + "\n\n\t" + f'{ncOptions[0]}, {ncOptions[1]}' + "\n\t\t" + f'You can use this option to basically do anything that you would do with netcat\'s it self. You can type crow {ncOptions[0]} "-z -v" "1-65535" site.com to scan the ports that are available on the target server. You can also use it as a small web server, a file transfer tool or to listen TCP connections and to listen UDP activities. The default options are set to "-zv".\n\n\t' + f'{torOptions[0]}, {torOptions[1]}' + "\n\t\t" + "The tor option is to forward your request from a tor connection." + "\n\n\t" + "-grabB, --grabB" + "\n\t\t" + f'With {gbOptions[0]} option you can read the latest nmap scan, identify all the open ports, loop through all them and grab all the banners.' + "\n\n" + '\033[1m' + 'EXAMPLES' + '\033[0m' + "\n\t" + f'crow {pingOptions[0]} 10.10.10.10\n\t' + f'crow {pingOptions[0]} "-c 3" 10.10.10.10\n\t' + f'crow {nmapOptions[0]} 10.10.10.10\n\t' + f'crow {nmapOptions[0]} "-sT -sV -sC -A -p-" 10.10.10.10\n\t' + f'crow {ncOptions[0]} "1-65535" 10.10.10.10\n\t' + f'crow {ncOptions[0]} "-zv" "1-65535" 10.10.10.10\n\t' + f'crow {nmapOptions[0]} {gbOptions[0]} 10.10.10.10\n\t' + f'crow {torOptions[0]} {nmapOptions[0]} "-sT -sV -sC -A" {gbOptions[0]}\n\t' + f'crow {torOptions[0]} {pingOptions[0]}  "-c 3" {nmapOptions[0]} "-sT -sV -sC -A" {ncOptions[0]} "-zv" "1-65535" {gbOptions[0]} 10.10.10.10\n\t')
+
+    else:
+        if argv[1] in pingOptions or argv[1] in nmapOptions or argv[1] in ncOptions or argv[1] in torOptions or argv[1] in gbOptions:
+
+            if duplicateChecker(argv) == False:
+
+                # Send the requests over a proxy server using tor and proxychains together.
+                if torOptions[0] in argv or torOptions[1] in argv:
+
+                    if dNSIC() == 3:
+
+                        torStatus = popen(f'systemctl status tor').read()
+
+                        if "inactive (dead)" in torStatus:
+                            system("systemctl start tor")
+
+                        system(f'systemctl restart tor')
+                        torStatus = popen(f'systemctl status tor').read()
+
+                        if "inactive (dead)" not in torStatus:
+                            # Configure tor and proxychains if itsn't configured correctly.
+                            if path.exists(proxychainsConfFP):
+                                searchW1 = '#dynamic_chain'
+                                replaceW1 = 'dynamic_chain'
+                                searchW2 = "strict_chain"
+                                replaceW2 = "#strict_chain"
+                                searchW3 = "#proxy_dns"
+                                replaceW3 = "proxy_dns"
+
+                                proxychainsConfFR = open(proxychainsConfFP, "rt")
+
+                                data = proxychainsConfFR.read()
+
+                                if searchW1 in data:
+                                    data = data.replace(searchW1, replaceW1)
+
+                                if searchW2 in data:
+                                    data = data.replace(searchW2, replaceW2)
+
+                                if searchW3 in data:
+                                    data = data.replace(searchW3, replaceW3)
+
+                                proxychainsConfFR.close()
+
+                                proxychainsConfFW = open(proxychainsConfFP, "wt")
+                                proxychainsConfFW.write(data)
+                                proxychainsConfFW.close()
+
+                        print(f'Operations will be executed from the fallowing IP address:')
+                        system(f'dhclient')
+                        system(f'proxychains curl ifconfig.io')
+                        torChoice = "proxychains "
+
+                    else:
+                        print(f'These packages: {notInstalledDPackages} are not available on your system and required to scan target devices with a tor connection. You can either install install them manually(Ex: apt install tor) or you can restart the crow to install them with crows help.')
+                else:
+                    torChoice = ""
+
+                # 1) Ping the host, document the host's status and the date and the time.
+                if pingOptions[0] in argv or pingOptions[1] in argv:
+                    if pingOptions[0] in argv and pingOptions[1] not in argv:
+                        pingOptIndex = argv.index(pingOptions[0])
+                    elif pingOptions[1] in argv and pingOptions[0] not in argv:
+                        pingOptIndex = argv.index(pingOptions[1])
+
+                    pingOptValIndex = pingOptIndex + 1
+
+                    if argv[pingOptValIndex] in helpOptions:
+                        system(f'ping {argv[pingOptValIndex]}')
+                    else:
+                        if "-" in argv[pingOptValIndex] and argv[pingOptValIndex] not in nmapOptions and argv[pingOptValIndex] not in ncOptions and argv[pingOptValIndex] not in gbOptions and argv[pingOptValIndex] not in torOptions:
+                            customPOpts = argv[pingOptValIndex]
+                        else:
+                            customPOpts = "-c 10"
+
+                        targetA = argv[len(argv)-1]
+                        print(f'\nPING RESULTS\nNetwork Status: {sendPing(customOpts=customPOpts, torChoice=torChoice, targetA=targetA)[0]}\nReports: {sendPing(customOpts=customPOpts, torChoice=torChoice, targetA=targetA)[1]}\n')
+
+                # 2) Scan the services with nmap, document the findings and the date and time.
+                if nmapOptions[0] in argv or nmapOptions[1] in argv:
+                    if nmapOptions[0] in argv and nmapOptions[1] not in argv:
+                        nmapOptIndex = argv.index(nmapOptions[0])
+                    elif nmapOptions[1] in argv and nmapOptions[0] not in argv:
+                        nmapOptIndex = argv.index(nmapOptions[1])
+
+                    nmapOptValIndex = nmapOptIndex + 1
+
+                    if argv[nmapOptValIndex] in helpOptions:
+                        system(f'nmap {argv[nmapOptValIndex]}')
+                    else:
+                        if "-" in argv[nmapOptValIndex] and argv[nmapOptValIndex] not in pingOptions and argv[nmapOptValIndex] not in ncOptions and argv[nmapOptValIndex] not in gbOptions and argv[nmapOptValIndex] not in torOptions:
+                            customNMOpts = argv[nmapOptValIndex]
+                        else:
+                            customNMOpts = "-sV -sC -sT -A -p-"
+
+                        targetA = argv[len(argv)-1]
+                        print(f'\nNMAP RESULTS\nReports: {nmapScan(customOpts=customNMOpts, torChoice=torChoice, targetA=targetA)}\n')
+
+                # 3) Use the netcat like a swiss army knife
+                if ncOptions[0] in argv or ncOptions[1] in argv:
+                    portSpec = None
+                    subNCArgv1IsI = None
+                    subNCArgv2IsI = None
+
+                    if ncOptions[0] in argv and ncOptions[1] not in argv:
+                        ncOptIndex = argv.index(ncOptions[0])
+                    elif ncOptions[1] in argv and ncOptions[0] not in argv:
+                        ncOptIndex = argv.index(ncOptions[1])
+
+                    ncOptValIndex = ncOptIndex + 1
+
+                    if argv[ncOptValIndex] in helpOptions:
+                        system(f'nc {argv[ncOptValIndex]}')
+                    else:
+                        targetA = argv[len(argv)-1]
+
+                        try:
+                            intId = int(argv[ncOptValIndex][0:1])
+                            subNCArgv1IsI = True
+                        except:
+                            subNCArgv1IsI = False
+
+                        if "-" in argv[ncOptValIndex] and subNCArgv1IsI == False and argv[ncOptValIndex] not in pingOptions and argv[ncOptValIndex] not in nmapOptions and argv[ncOptValIndex] not in gbOptions and argv[ncOptValIndex] not in torOptions:
+                            customNCOpts = argv[ncOptValIndex]
+                            try:
+                                int(argv[ncOptValIndex + 1][0:1])
+                                subNCArgv2IsI = True
+                            except:
+                                subNCArgv2IsI = False
+
+                            if subNCArgv2IsI != False:
+                                portSpec = argv[ncOptValIndex + 1]
+
+                        elif "-" in argv[ncOptValIndex] and subNCArgv1IsI == True and argv[ncOptValIndex] not in pingOptions and argv[ncOptValIndex] not in nmapOptions and argv[ncOptValIndex] not in gbOptions and argv[ncOptValIndex] not in torOptions:
+                            customNCOpts = "-zv"
+                            portSpec = argv[ncOptValIndex]
+
+                        elif "-" not in argv[ncOptValIndex] and subNCArgv1IsI == True and argv[ncOptValIndex] not in pingOptions and argv[ncOptValIndex] not in nmapOptions and argv[ncOptValIndex] not in gbOptions and argv[ncOptValIndex] not in torOptions:
+                            customNCOpts = "-zv"
+                            portSpec = argv[ncOptValIndex]
+
+                        elif argv[ncOptValIndex] in pingOptions or argv[ncOptValIndex] in nmapOptions or argv[ncOptValIndex] in gbOptions:
+                            print(f'You need to provide a port specification right after the netcat({ncOptions[0]}, {ncOptions[1]}) option to be able to use netcat features properly. Ex: crow {ncOptions[0]} "10" {pingOptions[0]} "-c 3" 10.10.10.10. Type "crow {helpOptions[0]}" to see the help page.')
+
+                        elif argv[ncOptValIndex] == targetA:
+                            print(f'You need to provide a port specification to be able to use netcat features properly. Type "crow {helpOptions[0]}" to see the help page.')
+
+                        if portSpec:
+                            print(f'\nNETCAT RESULTS\nReports: {netcatSwissArmyKnife(customOpts=customNCOpts, torChoice=torChoice, portN=portSpec, targetA=targetA)}\n')
+
+                # 4) Grap Service Banners with Netcat
+                if gbOptions[0] in argv or gbOptions[1] in argv:
+                    portNums = []
+                    fileTimes = []
+                    targetFLines = []
+
+                    if gbOptions[0] in argv and gbOptions[1] not in argv:
+                        gbOptIndex = argv.index(gbOptions[0])
+                    elif gbOptions[1] in argv and gbOptions[0] not in argv:
+                        gbOptIndex = argv.index(gbOptions[1])
+
+                    gbOptValIndex = gbOptIndex + 1
+
+                    if "-" in argv[gbOptValIndex] and argv[gbOptValIndex] not in pingOptions and argv[gbOptValIndex] not in nmapOptions and argv[gbOptValIndex] not in ncOptions and argv[gbOptValIndex] not in torOptions:
+                        customGBOpts = argv[gbOptValIndex]
+                    else:
+                        customGBOpts = "-nv"
+
+                    targetA = argv[len(argv)-1]
+
+                    if len(listdir(nmapDocsFolder)) != 0:
+                        for file in listdir(nmapDocsFolder):
+                            timeCheck = [file.split("-")[0].split("_")[0], file.split("-")[0].split("_")[1], file.split("-")[0].split("_")[2]] + [file.split("-")[1].split("_")[0], file.split("-")[1].split("_")[1], file.split("-")[1].split("_")[2].split(".")[0]]
+                            fileTimes.append(timeCheck)
+
+                        latestFile = f'{max(fileTimes)[0]}_{max(fileTimes)[1]}_{max(fileTimes)[2]}-{max(fileTimes)[3]}_{max(fileTimes)[4]}_{max(fileTimes)[5]}.xml'
+
+                        targetFP = f'{nmapDocsFolder}/{latestFile}'
+                        targetF = open(targetFP, 'r')
+
+                        for line in targetF:
+                            if "open" in line or "filtered" in line:
+                                targetFLines.append(line)
+
+                        for line in targetFLines:
+                            portNumII = line.find("/")
+                            specificPortNum = line[0:portNumII]
+                            portNums.append(int(specificPortNum))
+
+                        targetF.close()
+
+                        if len(portNums) != 0:
+                            print("BANNER GRABBING RESULTS:")
+                            for p in portNums:
+                                print(f'\nResult For Port - {p} -> Saved in to the reports\nReport location: {grabBanners(customOpts=customGBOpts, torChoice=torChoice, targetA=targetA, portN=p)}\n')
+
+                        else:
+                            print(f'\nBANNER GRABBING RESULTS\nPorts: {portNums}\nReports: N/A\n')
+
+                    else:
+                        print(f'You need to execute a {nmapOptions[0]}/{nmapOptions[1]} scan first to be able to execute {gbOptions[0]}/{gbOptions[1]} scan.')
+
+            else:
+                print(f'There are duplicated arguments. There shouldn\'t be any duplicates in the arguments that you decided to enter. Bad Ex: crow {pingOptions[0]} {pingOptions[1]} 10.10.10.10. Good Ex: crow -ping 10.10.10.10')
+
+        else:
+            print(f'You didn\'t entered a valid option. Type crow {helpOptions[0]} to see the help page.')
+
+else:
+    print(f'These packages {notInstalledRPackages} are not available on your system. You need make sure all the required packages are available on your system.')
