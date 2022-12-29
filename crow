@@ -6,10 +6,13 @@ from sys import argv, exit
 from datetime import datetime
 from shutil import rmtree
 from pathlib import Path
-from logging import basicConfig, DEBUG, debug
+from logging import basicConfig, DEBUG, debug, disable, CRITICAL
 
 # Doing the basic configuration for the debugging feature
 basicConfig(level=DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Remove the line the enable logging.
+disable(CRITICAL)
 
 # VARIABLES
 # Cyber kill chain findings folder.
