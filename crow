@@ -60,7 +60,6 @@ notInstalledDPackages = []
 helpString = '\033[1m' + "NAME" + '\033[0m' + "\n\t" + 'crow - A command line reconnaissance tool which collects information about the target system and documents the findings in txt files with dates and times.\n\n' + '\033[1m' + 'USAGE' + '\033[0m'+ "\n\t" + 'crow [CROW OPTION] "[Custom Options]" "[Value/Values]" "[TARGET]"' + "\n\n" + '\033[1m' + 'DESCRIPTION' + '\033[0m' +"\n\t" + "A command line tool that collects information about the target system using various types of reconnaissance techniques.\n\n\t" + f'{pingOptions[0]}, {pingOptions[1]} \n\t\tSend a ping to a target device. The default options are set to -c 5\n\n\t' + f'{rushOptions[0]}, {rushOptions[1]} \n\t\tUse this option to scan all TCP and UDP ports quickly.\n\n\t' f'{nmapOptions[0]}, {nmapOptions[1]}\n\t\t' + "Use this option to scan the services available on a target device. Use double quotes to use the options that are available to nmap's itself. The default options are set to -sV -sC -sT -A -p-" + "\n\n\t" + f'{ncOptions[0]}, {ncOptions[1]}' + "\n\t\t" + f'Do anything that you would do with netcat\'s itself.\n\n\t' + f'{torOptions[0]}, {torOptions[1]}' + "\n\t\t" + "Execute operations over a tor connection." + "\n\n\t" + f'{gbOptions[0]}, {gbOptions[1]}' + '\n\t\t' + f'Grab service banners using the last nmap scan.' + '\n\n' + f'{goBusterOptions[0]}, {goBusterOptions[1]}' + '\n\t\t' + f'Enumerate the target to reveal hidden subdomains or folders.' + "\n\n" + '\033[1m' + 'EXAMPLES' + '\033[0m' + "\n\t" + f'crow {pingOptions[0]} 10.10.10.10\n\t' + f'crow {pingOptions[0]} "-c 3" 10.10.10.10\n\t' + f'crow {nmapOptions[0]} 10.10.10.10\n\t' + f'crow {nmapOptions[0]} "-sT -sV -sC -A -p-" 10.10.10.10\n\t' + f'crow {ncOptions[0]} "1-65535" 10.10.10.10\n\t' + f'crow {ncOptions[0]} "-zv" "1-65535" 10.10.10.10\n\t' + f'crow {nmapOptions[0]} {gbOptions[0]} 10.10.10.10\n\t' + f'crow {torOptions[0]} {nmapOptions[0]} "-sT -sV -sC -p-" 10.10.10.10\n\t' + f'crow {torOptions[0]} {nmapOptions[0]} "-sU -sV -sC -p-" 10.10.10.10\n\t' + f'crow {torOptions[0]} {pingOptions[0]}  "-c 3" {nmapOptions[0]} "-sT -sV -sC -A" {ncOptions[0]} "-zv" "1-65535" {gbOptions[0]} 10.10.10.10\n\t' + f'crow {rushOptions[0]} 10.10.10.10\n\t' + f'crow {goBusterOptions[0]} "dir" -u -w "/usr/share/dirb/wordlists/common.txt" 10.10.10.10\n\t'
 
 # FUNCTIONS
-
 def main():
     """The function which runs the entire program"""
     # Make sure all required softwares are installed
@@ -68,7 +67,7 @@ def main():
         # Printing the help string if the first argument entered after crow is an help option.
         if argv[1] in helpOptions:
             print(helpString)
-        # Installing the security lists if the first argument which is entered after crow is in security lists' installer options.
+        # Installing the security lists if the first argument which is entered after crow is in security lists' installer option.
         elif argv[1] in secListsInstallerOpts:
             secListInstaller(command=argv[1])
         # Executing calling the rush function if total of 3 arguments are entered and if the second argument is an rush option.
@@ -639,6 +638,8 @@ def grabBanners(customOpts, torChoice, targetA):
     fileTimes = []
     # Creating an empty list for the the lines for target file.
     theListOfLines = []
+    # Creating an empty string for the record path becuase there aren't any open port no file will be generated.
+    recordPath = ""
 
     # Making sure nmap documents folder is not empty.
     if len(listdir(nmapDocsFolder)) != 0:
