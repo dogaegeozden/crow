@@ -13,11 +13,8 @@ Crow is a command line reconnaissance tool to collect information about a target
 8) proxychains
 
 ## INSTALLATION
-1) ```git clone https://github.com/tamrinotte/crow.git```
-2) ```cd crow```
-3) ```sudo cp crow /usr/bin/```
-4) ```sudo chown $USER:$USER /usr/bin/crow && sudo chmod u+x /usr/bin/crow```
-
+1) ```curl -L https://github.com/dogaegeozden/crow/releases/download/cyber-security/crow.deb -o crow.deb```
+2) ```sudo dpkg crow.deb```
 
 ## OPTIONS
 
