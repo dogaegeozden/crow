@@ -11,15 +11,15 @@ from logging import basicConfig, DEBUG, debug, disable, CRITICAL
 # Doing the basic configuration for the debugging feature
 basicConfig(level=DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Comment out the line to enable debugging.
+# Disabling the debugging feature. Hint: Comment out the line to enable debugging.
 disable(CRITICAL)
 
 # VARIABLES
-# Cyber kill chain findings folder.
+# Creating a path which leads to the folder where the cyber kill chain findings will be located.
 ckcPath = f'/root/.cyber_kill_chain'
 # Name of the campaign
 campaignN = f'reconnaissance'
-# List of the reconnaissance findings folders
+# List of the reconnaissance findings' folders' names'
 ckcFolders = ["ping_docs", "nmap_docs", "netcat_docs", "banner_grabbing_docs", "gobuster_docs", "sec_lists"]
 # Creating the path to the folder where ping results are located
 pingDocsFolder = Path(ckcPath,campaignN,ckcFolders[0])
